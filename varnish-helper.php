@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Varnish Helper
-Plugin URI:
+Plugin URI: https://github.com/mingshun/varnish-helper
 Description: Varnish helper for WordPress in purge and ESI.
 Author: mingshun
 Author URI: https://github.com/mingshun
