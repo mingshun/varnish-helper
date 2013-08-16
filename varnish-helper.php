@@ -8,24 +8,25 @@ Author URI: https://github.com/mingshun
 Version: 1.0
 */
 
+require_once('esi-widget.php');
 
 /**
-	*	Send PURGE request to the given $url.
-	*
-	* @since 1.0
-	*/
-function vh_purge($url) {
-	wp_remote_request(get_bloginfo('url') . $url, array('method' => 'PURGE'));
+ * Send PURGE request to the given $uri.
+ *
+ * @since 1.0
+ */
+function vh_purge($uri) {
+  wp_remote_request(get_bloginfo('url') . $uri, array('method' => 'PURGE'));
 }
 
 
 /**
- * Send BAN request to the given $url.
+ * Send BAN request to the given $uri.
  *
  * @since 1.0
  */
-function vh_ban($url) {
-	wp_remote_request(get_bloginfo('url') . $url, array('method' => 'BAN'));
+function vh_ban($uri) {
+  wp_remote_request(get_bloginfo('url') . $uri, array('method' => 'BAN'));
 }
 
 
@@ -35,10 +36,10 @@ function vh_ban($url) {
  * @since 1.0
  */
 function vh_purge_common() {
-	vh_purge('/');
-	vh_purge('/feed/');
-	vh_purge('/feed/atom/');
-	vh_ban('/page/.*');
+  vh_purge('/');
+  vh_purge('/feed/');
+  vh_purge('/feed/atom/');
+  vh_ban('/page/.*');
 }
 
 
@@ -48,13 +49,13 @@ function vh_purge_common() {
  * @since 1.0
  */
 function vh_purge_post($post_id) {
-	$post = get_post($post_id);
-	if (!wp_is_post_revision($post)) {
-		$permalink = get_permalink($post_id);
-		$url = str_replace(get_bloginfo('url'), '', $permalink);
-		vh_purge($url);
-		vh_purge($url . 'feed/');
-	}
+  $post = get_post($post_id);
+  if (!wp_is_post_revision($post)) {
+    $permalink = get_permalink($post_id);
+    $uri = str_replace(get_bloginfo('url'), '', $permalink);
+    vh_purge($uri);
+    vh_purge($uri . 'feed/');
+  }
 }
 
 
@@ -64,9 +65,9 @@ function vh_purge_post($post_id) {
  * @since 1.0
  */
 function vh_purge_archive($post_id) {
-	$slug = get_the_time('/Y/m', $post_id);
-	$url = $slug . '/.*';
-	vh_ban($url);
+  $slug = get_the_time('/Y/m', $post_id);
+  $uri = $slug . '/.*';
+  vh_ban($uri);
 }
 
 
@@ -76,11 +77,11 @@ function vh_purge_archive($post_id) {
  * @since 1.0
  */
 function vh_purge_author($post_id) {
-	$post = get_post($post_id);
-	$author_id = $post->post_author;
-	$author_posts_link = get_author_posts_url($author_id);
-	$url = str_replace(get_bloginfo('url'), '', $author_posts_link) . '.*';
-	vh_ban($url);
+  $post = get_post($post_id);
+  $author_id = $post->post_author;
+  $author_posts_link = get_author_posts_url($author_id);
+  $uri = str_replace(get_bloginfo('url'), '', $author_posts_link) . '.*';
+  vh_ban($uri);
 }
 
 
@@ -90,11 +91,11 @@ function vh_purge_author($post_id) {
  * @since 1.0
  */
 function vh_purge_category($post_id) {
-	$categories = get_the_category($post_id);
-	foreach ($categories as $category) {
-		$url = '/category/' . $category->slug . '/.*';
-		vh_ban($url);
-	}
+  $categories = get_the_category($post_id);
+  foreach ($categories as $category) {
+    $uri = '/category/' . $category->slug . '/.*';
+    vh_ban($uri);
+  }
 }
 
 
@@ -104,11 +105,11 @@ function vh_purge_category($post_id) {
  * @since 1.0
  */
 function vh_purge_tag($post_id) {
-	$tags = get_the_tags($post_id);
-	foreach ($tags as $tag) {
-		$url = '/tag/' . $tag->slug . '/.*';
-		vh_ban($url);
-	}
+  $tags = get_the_tags($post_id);
+  foreach ($tags as $tag) {
+    $uri = '/tag/' . $tag->slug . '/.*';
+    vh_ban($uri);
+  }
 }
 
 
@@ -118,10 +119,22 @@ function vh_purge_tag($post_id) {
  * @since 1.0
  */
 function vh_purge_post_related_pages($post_id) {
-	vh_purge_archive($post_id);
-	vh_purge_author($post_id);
-	vh_purge_category($post_id);
-	vh_purge_tag($post_id);
+  vh_purge_archive($post_id);
+  vh_purge_author($post_id);
+  vh_purge_category($post_id);
+  vh_purge_tag($post_id);
+}
+
+
+/**
+ * Purge ESI sidebar.
+ *
+ * @since 1.0
+ */
+function vh_purge_esi_sidebar() {
+  $url = plugin_dir_url(__FILE__) . 'esi-sidebar.php';
+  $uri = str_replace(get_bloginfo('url'), '', $url);
+  vh_purge($uri);
 }
 
 
@@ -131,7 +144,7 @@ function vh_purge_post_related_pages($post_id) {
  * @since 1.0
  */
 function vh_purge_all() {
-	vh_ban('/.*');
+  vh_ban('/.*');
 }
 
 
@@ -141,11 +154,12 @@ function vh_purge_all() {
  * @since 1.0
  */
 function vh_purge_when_post_status_changed($new_status, $old_status, $post) {
-	if ($new_status == 'publish' || $old_status == 'publish') {
-		vh_purge_post($post->ID);
-		vh_purge_common($post->ID);
-		vh_purge_post_related_pages($post->ID);
-	}
+  if ($new_status == 'publish' || $old_status == 'publish') {
+    vh_purge_post($post->ID);
+    vh_purge_common($post->ID);
+    vh_purge_post_related_pages($post->ID);
+    vh_purge_esi_sidebar();
+  }
 }
 
 
@@ -155,9 +169,9 @@ function vh_purge_when_post_status_changed($new_status, $old_status, $post) {
  * @since 1.0
  */
 function vh_purge_comment($comment_id) {
-	$comment = get_comment($comment_id);
-	$post_id = $comment->comment_post_ID;
-	vh_purge_post($post_id);
+  $comment = get_comment($comment_id);
+  $post_id = $comment->comment_post_ID;
+  vh_purge_post($post_id);
 }
 
 /**
@@ -166,11 +180,13 @@ function vh_purge_comment($comment_id) {
  * @since 1.0
  */
 function vh_purge_when_comment_status_changed($new_status, $old_status, $comment) {
-	if ($new_status == 'approved' || $old_status == 'approved') {
-		$post_id = $comment->comment_post_ID;
-		vh_purge_post($post_id);
-	}
+  if ($new_status == 'approved' || $old_status == 'approved') {
+    $post_id = $comment->comment_post_ID;
+    vh_purge_post($post_id);
+    vh_purge_esi_sidebar();
+  }
 }
+
 
 
 // Purge when post status changed.

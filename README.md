@@ -43,3 +43,10 @@ sub vcl_miss {
 }
 ```
 For security, limit the IPs that can be only requested PURGE and BAN.
+
+To enable Edge Side Includes, you should do in vcl_fetch:
+```
+if (beresp.http.Content-Type ~ "html") {
+	set beresp.do_esi = true;
+}
+```
