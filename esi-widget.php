@@ -17,7 +17,9 @@ function esi_widget_control() {
  */
 function esi_widget($args) {
   echo $before_widget;
+  echo '<!--esi ';
   echo '<esi:include src="'. plugin_dir_url(__FILE__) . 'esi-sidebar.php" />';
+  echo ' -->';
   echo $after_widget;
 }
 
