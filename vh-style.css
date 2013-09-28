@@ -1,0 +1,12 @@
+#nav h2 {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0;
+}
+
+#ban-wildcard {
+  visibility: hidden;
+}
+
+p.desc {
+  border-bottom: 1px solid #ddd;
+}
