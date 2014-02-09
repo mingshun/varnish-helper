@@ -44,7 +44,7 @@ function esi_widget_setup() {
       'id'              => 'esi-sidebar',
       'description'     => 'Varnish Edge Side Include Sidebar',
       'class'           => '',
-      'before_widget'   => '<div class="well widget-container">',
+      'before_widget'   => '<div class="well widget-box clearfix">',
       'after_widget'    => '</div>',
       'before_title'    => '<h4 class="widget-title">',
       'after_title'     => '</h4>'
