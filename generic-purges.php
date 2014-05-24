@@ -7,12 +7,26 @@
 
 
 /**
+ * Send request to the given $uri in the specified $method.
+ *
+ * @since 1.0
+ */
+function vh_generic_purge($uri, $method) {
+  $blog_url = get_bloginfo('url');
+  if ($_SERVER['HTTPS'] == 'on' && stripos($blog_url, 'https') == FALSE) {
+    $blog_url = str_ireplace('http', 'https', $blog_url);
+  }
+  return wp_remote_request($blog_url . $uri, array('method' => $method));
+}
+
+
+/**
  * Send PURGE request to the given $uri.
  *
  * @since 1.0
  */
 function vh_purge($uri) {
-  return wp_remote_request(get_bloginfo('url') . $uri, array('method' => 'PURGE'));
+  vh_generic_purge($uri, 'PURGE');
 }
 
 
@@ -22,7 +36,7 @@ function vh_purge($uri) {
  * @since 1.0
  */
 function vh_ban($uri) {
-  return wp_remote_request(get_bloginfo('url') . $uri, array('method' => 'BAN'));
+  vh_generic_purge($uri, 'BAN');
 }
 
 
@@ -129,7 +143,11 @@ function vh_purge_post_related_pages($post_id) {
  */
 function vh_purge_esi_sidebar() {
   $url = plugin_dir_url(__FILE__) . 'esi-sidebar.php';
-  $uri = str_replace(get_bloginfo('url'), '', $url);
+  $blog_url = get_bloginfo('url');
+  if ($_SERVER['HTTPS'] == on && stripos($blog_url, 'https') == FALSE) {
+    $blog_url = str_ireplace('http', 'https', $blog_url);
+  }
+  $uri = str_replace($blog_url, '', $url);
   vh_purge($uri);
 }
 
