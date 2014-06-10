@@ -5,7 +5,7 @@ Plugin URI: https://github.com/mingshun/varnish-helper
 Description: Varnish helper for WordPress in purge and ESI.
 Author: mingshun
 Author URI: https://github.com/mingshun
-Version: 1.0
+Version: 2.0
 */
 
 
@@ -40,6 +40,7 @@ function vh_purge_comment($comment_id) {
   $comment = get_comment($comment_id);
   $post_id = $comment->comment_post_ID;
   vh_purge_post($post_id);
+  vh_purge_esi_sidebar();
 }
 
 /**

@@ -16,6 +16,9 @@ function esi_widget_control() {
  * @since 1.0
  */
 function esi_widget($args) {
+  if (!isset($_SERVER['HTTPS'])) {
+    $_SERVER['HTTPS'] = 'off';
+  }
   $esi_server_https_state = $_SERVER['HTTPS'];
   echo $before_widget;
   echo '<!--esi ';

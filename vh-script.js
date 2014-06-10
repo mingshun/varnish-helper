@@ -20,4 +20,12 @@
       $(this).val('').focus().val(t);
     });
   });
+
+  $(document).ready(function() {
+    function selectAll() {
+      $(this).select();
+    }
+    $('#node_name').click(selectAll);
+    $('#node_host').click(selectAll);
+  });
 })(window.jQuery);

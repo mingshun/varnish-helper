@@ -6,17 +6,24 @@
  */
 
 
+define('VH_SCHEME_HTTP', 'http://');
+define('VH_SCHEME_HTTPS', 'https://');
+
+
 /**
  * Send request to the given $uri in the specified $method.
  *
  * @since 1.0
  */
 function vh_generic_purge($uri, $method) {
-  $blog_url = get_bloginfo('url');
-  if ($_SERVER['HTTPS'] == 'on' && stripos($blog_url, 'https') == FALSE) {
-    $blog_url = str_ireplace('http', 'https', $blog_url);
-  }
-  return wp_remote_request($blog_url . $uri, array('method' => $method));
+  $host = vh_get_domain();
+  $url = vh_get_blog_url();
+  return wp_remote_request($url . $uri, array(
+    'method' => $method, 
+    'headers' => array(
+      'host' => vh_get_domain()
+    ),
+  ));
 }
 
 
@@ -26,7 +33,7 @@ function vh_generic_purge($uri, $method) {
  * @since 1.0
  */
 function vh_purge($uri) {
-  vh_generic_purge($uri, 'PURGE');
+  return vh_generic_purge($uri, 'PURGE');
 }
 
 
@@ -36,7 +43,7 @@ function vh_purge($uri) {
  * @since 1.0
  */
 function vh_ban($uri) {
-  vh_generic_purge($uri, 'BAN');
+  return vh_generic_purge($uri, 'BAN');
 }
 
 
@@ -62,7 +69,7 @@ function vh_purge_post($post_id) {
   $post = get_post($post_id);
   if (!wp_is_post_revision($post)) {
     $permalink = get_permalink($post_id);
-    $uri = str_replace(get_bloginfo('url'), '', $permalink);
+    $uri = vh_get_uri_by_url($permalink);
     vh_purge($uri);
     vh_purge($uri . 'feed/');
   }
@@ -89,9 +96,9 @@ function vh_purge_archive($post_id) {
 function vh_purge_author($post_id) {
   $post = get_post($post_id);
   $author_id = $post->post_author;
-  $author_posts_link = get_author_posts_url($author_id);
-  $uri = str_replace(get_bloginfo('url'), '', $author_posts_link) . '.*';
-  vh_ban($uri);
+  $author_posts_url = get_author_posts_url($author_id);
+  $uri = vh_get_uri_by_url($author_posts_url);
+  vh_ban($uri . '.*');
 }
 
 
@@ -102,9 +109,11 @@ function vh_purge_author($post_id) {
  */
 function vh_purge_category($post_id) {
   $categories = get_the_category($post_id);
-  foreach ($categories as $category) {
-    $uri = '/category/' . $category->slug . '/.*';
-    vh_ban($uri);
+  if ($categories) {
+    foreach ($categories as $category) {
+      $uri = '/category/' . $category->slug . '/.*';
+      vh_ban($uri);
+    }
   }
 }
 
@@ -116,9 +125,11 @@ function vh_purge_category($post_id) {
  */
 function vh_purge_tag($post_id) {
   $tags = get_the_tags($post_id);
-  foreach ($tags as $tag) {
-    $uri = '/tag/' . $tag->slug . '/.*';
-    vh_ban($uri);
+  if ($tags) {
+    foreach ($tags as $tag) {
+      $uri = '/tag/' . $tag->slug . '/.*';
+      vh_ban($uri);
+    }
   }
 }
 
@@ -143,11 +154,7 @@ function vh_purge_post_related_pages($post_id) {
  */
 function vh_purge_esi_sidebar() {
   $url = plugin_dir_url(__FILE__) . 'esi-sidebar.php';
-  $blog_url = get_bloginfo('url');
-  if ($_SERVER['HTTPS'] == on && stripos($blog_url, 'https') == FALSE) {
-    $blog_url = str_ireplace('http', 'https', $blog_url);
-  }
-  $uri = str_replace($blog_url, '', $url);
+  $uri = vh_get_uri_by_url($url);
   vh_purge($uri);
 }
 
@@ -159,5 +166,64 @@ function vh_purge_esi_sidebar() {
  */
 function vh_purge_all() {
   vh_ban('/.*');
+}
+
+
+/**
+ * Get blog domain.
+ *
+ * @since 2.0
+ */
+function vh_get_domain() {
+  return vh_get_location_by_url(get_bloginfo('url'));
+}
+
+
+/**
+ * Get blog url with ssl recognition.
+ *
+ * @since 2.0
+ */
+function vh_get_blog_url() {
+  return vh_get_url(vh_get_domain());
+}
+
+
+/**
+ * Get location by the given url.
+ *
+ * @since 2.0
+ */
+function vh_get_location_by_url($url) {
+  if (stripos($url, VH_SCHEME_HTTP) == 0) {
+    $scheme = VH_SCHEME_HTTP;
+  } else if (stripos($url, VH_SCHEME_HTTPS) == 0) {
+    $scheme = VH_SCHEME_HTTPS;
+  } else {
+    $scheme = NULL;
+  }
+  return str_ireplace($scheme, '', $url);
+}
+
+
+/**
+ * Get url by the given location with ssl recognition.
+ *
+ * @since 2.0
+ */
+function vh_get_url($location) {
+  return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? VH_SCHEME_HTTPS : VH_SCHEME_HTTP) . $location;
+}
+
+
+/**
+ * Get uri by the given url with ssl recognition.
+ *
+ * @since 2.0
+ */
+function vh_get_uri_by_url($url) {
+  $location = vh_get_location_by_url($url);
+  $domain = vh_get_domain();
+  return str_ireplace($domain, '', $location);
 }
 ?>

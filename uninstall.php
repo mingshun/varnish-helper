@@ -3,7 +3,7 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
   exit ();
 }
 
-$option_names = array('varnish_helper_auto_clean_tasks');
+$option_names = array('varnish_helper_auto_clean_tasks', 'varnish_helper_edge_nodes');
 
 if (!is_multisite()) {
 	foreach ($option_names as $option_name) {
