@@ -60,14 +60,18 @@ function vh_purge_when_comment_status_changed($new_status, $old_status, $comment
 
 // Purge when post status changed.
 add_action('transition_post_status', 'vh_purge_when_post_status_changed', 99, 3);
+add_action('transition_post_status', 'vh_purge_while_post_status_changes', 99);
 
 // Purge when there is a comment or the existing comment status changes.
 add_action('comment_post', 'vh_purge_comment', 99);
 add_action('transition_comment_status', 'vh_purge_when_comment_status_changed', 99, 3);
+add_action('comment_post', 'vh_purge_while_comment_status_changes', 99);
+add_action('transition_comment_status', 'vh_purge_while_comment_status_changes', 99);
 
 // Purge when there is a xml-rpc call.
 add_action('xmlrpc_call', 'vh_purge_all', 99);
 
 // Purge when switching theme.
 add_action('switch_theme', 'vh_purge_all', 99);
+add_action('switch_theme', 'vh_purge_while_theme_switches', 99);
 ?>

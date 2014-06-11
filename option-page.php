@@ -732,8 +732,9 @@ function vh_handle_add_node() {
   $host_regex = array();
   array_push($host_regex, '/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/');
   array_push($host_regex, '/^([a-zA-Z0-9][a-zA-Z0-9\-\_]+[a-zA-Z0-9]\.)?[a-zA-Z0-9][a-zA-Z0-9\-\_]+[a-zA-Z0-9]\.[a-z]{2,7}$/');
+  array_push($host_regex, '/^localhost$/');
 
-  $host_validate = FALSE;
+  $host_validate = false;
   for ($i = 0; $i < count($host_regex); ++$i) {
     if (preg_match($host_regex[$i], $node_host)) {
       $host_validate = TRUE;
@@ -792,6 +793,42 @@ function vh_handle_manage_node() {
 }
 
 
+/**
+ * Show manual clean results.
+ *
+ * @since 2.0
+ */
+function vh_show_manual_clean_results($action, $uri, $results) {
+  $prefix = $action . '<code>' . $uri . '</code>';
+  if (!$results) {
+    add_settings_error('varnish-helper-settings', 'manual', $prefix . '没有执行结果！', 'error');
+    return;
+
+  } else {
+    $prefix = $action . '<code>' . $uri;
+  }
+
+  for ($i = 0; $i < count($results); ++$i) {
+    $item = $results[$i];
+    $message = $prefix;
+    $message .= '@' . $item['host'] . '</code> -> ';
+    if (is_wp_error($item['result'])) {
+      $message .= '执行失败，原因：' . $item['result']->get_error_message();
+      add_settings_error('varnish-helper-settings', 'manual', $message, 'error');
+      
+    } else {
+      if ($item['result']['response']['code'] == 200) {
+        $message .= '执行成功';
+        add_settings_error('varnish-helper-settings', 'manual', $message, 'updated');
+
+      } else {
+        $message .= '执行失败，原因：' . $item['result']['response']['message'];
+        add_settings_error('varnish-helper-settings', 'manual', $message, 'error');
+      }
+    }
+  }
+}
+
 
 /**
  * Handle manual purge.
@@ -803,30 +840,14 @@ function vh_handle_manual_clean() {
   $uri = $_POST['purge_uri'];
 
   if (!strcasecmp($method, 'PURGE')) {
-    $result = vh_purge($uri);
-    if (is_wp_error($result)) {
-      add_settings_error('varnish-helper-settings', 'manual', $result->get_error_message(), 'error');
-    } else {
-      if ($result['response']['code'] == 200) {
-        add_settings_error('varnish-helper-settings', 'manual', '清洗“' . $uri . '”执行成功。', 'updated');
-      } else {
-        add_settings_error('varnish-helper-settings', 'manual', '清洗“' . $uri . '”执行失败，原因：' . $result['response']['message'] . '。', 'error');
-      }
-    }
+    $results = vh_purge($uri);
+    vh_show_manual_clean_results('清洗', $uri, $results);
 
   } else if (!strcasecmp($method, 'BAN')) {
     $uri_suffix = '.*';
     $uri .= (substr($uri, -strlen($uri_suffix)) == $uri_suffix) ? '' : $uri_suffix;
-    $result = vh_ban($uri);
-    if (is_wp_error($result)) {
-      add_settings_error('varnish-helper-settings', 'manual', $result->get_error_message(), 'error');
-    } else {
-      if ($result['response']['code'] == 200) {
-        add_settings_error('varnish-helper-settings', 'manual', '批量清洗“' . $uri . '”执行成功。', 'updated');
-      } else {
-        add_settings_error('varnish-helper-settings', 'manual', '批量清洗“' . $uri . '”执行失败，原因：' . $result['response']['message'] . '。', 'error');
-      }
-    }
+    $results = vh_ban($uri);
+    vh_show_manual_clean_results('批量清洗', $uri, $results);
 
   } else {
     add_settings_error('varnish-helper-settings', 'manual', '无效的清洗方法！', 'error');

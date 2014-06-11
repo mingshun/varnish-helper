@@ -5,6 +5,8 @@
  * @since 1.0
  */
 
+require_once('option-page.php');
+
 
 define('VH_SCHEME_HTTP', 'http://');
 define('VH_SCHEME_HTTPS', 'https://');
@@ -16,14 +18,24 @@ define('VH_SCHEME_HTTPS', 'https://');
  * @since 1.0
  */
 function vh_generic_purge($uri, $method) {
-  $host = vh_get_domain();
-  $url = vh_get_blog_url();
-  return wp_remote_request($url . $uri, array(
-    'method' => $method, 
-    'headers' => array(
-      'host' => vh_get_domain()
-    ),
-  ));
+  $hosts = vh_get_edge_node_list();
+  $results = array();
+  for ($i = 0; $i < count($hosts); ++$i) {
+    $host = $hosts[$i]['host'];
+    $url = vh_get_url($host . $uri);
+    $result = wp_remote_request($url, array(
+      'method' => $method,
+      'headers' => array(
+        'host' => vh_get_domain()
+      ),
+    ));
+    array_push($results, array(
+      'host' => $host,
+      'uri' => $uri,
+      'result' => $result
+    ));
+  }
+  return $results;
 }
 
 
@@ -166,6 +178,36 @@ function vh_purge_esi_sidebar() {
  */
 function vh_purge_all() {
   vh_ban('/.*');
+}
+
+
+/**
+ * Purge custom uri while post status changes.
+ *
+ * @since 2.0
+ */
+function vh_purge_while_post_status_changes() {
+
+}
+
+
+/**
+ * Purge custom uri while comment status changes.
+ *
+ * @since 2.0
+ */
+function vh_purge_while_comment_status_changes() {
+
+}
+
+
+/**
+ * Purge custom uri while theme switches.
+ *
+ * @since 1.0
+ */
+function vh_purge_while_theme_switches() {
+
 }
 
 
