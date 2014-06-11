@@ -343,7 +343,7 @@ function vh_page_edge_node_render() {
     <tbody>
       <tr valign="top">
         <th scope="row">
-          <label for="row_node_name">别名</label>
+          <label for="row_node_name">名称</label>
         </th>
         <td id="row_node_name">
              <input type="text" class="regular-text" id="node_name" name="node_name" value="新节点" required>
@@ -409,7 +409,10 @@ function vh_get_edge_node_manage_links_render($id) {
 function vh_edge_node_table_render() {
   $nodes = vh_get_edge_node_list();
 
-  $title_items = '<th>序号</th><th>节点名称</th><th>主机</th><th>操作</th>';
+  $title_items = '<th class="column-index">序号</th>';
+  $title_items .= '<th class="column-name">名称</th>';
+  $title_items .= '<th class="column-host">主机</th>';
+  $title_items .= '<th class="column-actions">操作</th>';
 
   $head_title = '<tr><th id="cb" class="manage-column column-cb check-column"><input type="checkbox" id="cb-select-all-1"></th>';
   $head_title .= $title_items . '</tr>';
@@ -418,7 +421,7 @@ function vh_edge_node_table_render() {
   $foot_title .= $title_items . '</tr>';
 
   $result = '';
-  $result .= '<table class="widefat fixed">';
+  $result .= '<table class="widefat fixed" id="edge-node-table">';
   $result .= '<thead>' . $head_title . '</thead>';
   $result .= '<tfoot>' . $foot_title . '</tfoot>';
   $result .= '<tbody>';
@@ -570,29 +573,7 @@ function vh_get_auto_clean_last_clean_render($time) {
     return '<i>从不</i>';
   }
 
-  return $time;
-}
-
-
-/**
- * Return auto clean last clean status.
- *
- * @since 1.0
- */
-function vh_get_auto_clean_last_status_render($status) {
-  if (!$status) {
-    return '-';
-  }
-
-  if ($status == 'wp error') {
-    return '<span style="color: red;">清洗失败</span>';
-  }
-
-  if ($status['code'] >= 300) {
-    return '<span style="color: red;">清洗失败(' . $status['message'] . ')</span>';
-  } else {
-    return '<span style="color: green;">清洗成功</span>';
-  }
+  return strftime('%Y-%m-%d %H-%M-%S', $time);
 }
 
 
@@ -624,7 +605,13 @@ function vh_get_auto_clean_manage_links_render($id) {
 function vh_auto_clean_table_render() {
   $list = vh_get_auto_clean_task_list();
 
-  $title_items = '<th>序号</th><th>清洗方法</th><th>URI</th><th>清洗时机</th><th>最后清洗时间</th><th>最后清洗结果</th><th>操作</th>';
+  $title_items = '<th class="column-index">序号</th>';
+  $title_items .= '<th class="column-method">清洗方法</th>';
+  $title_items .= '<th class="column-uri">URI</th>';
+  $title_items .= '<th class="column-timing">清洗时机</th>';
+  $title_items .= '<th class="column-time">最后清洗时间</th>';
+  $title_items .= '<th class="column-status">最后清洗结果</th>';
+  $title_items .= '<th class="column-actions">操作</th>';
 
   $head_title = '<tr><th id="cb" class="manage-column column-cb check-column"><input type="checkbox" id="cb-select-all-1"></th>';
   $head_title .= $title_items . '</tr>';
@@ -633,7 +620,7 @@ function vh_auto_clean_table_render() {
   $foot_title .= $title_items . '</tr>';
 
   $result = '';
-  $result .= '<table class="widefat fixed">';
+  $result .= '<table class="widefat fixed" id="auto-clean-table">';
   $result .= '<thead>' . $head_title . '</thead>';
   $result .= '<tfoot>' . $foot_title . '</tfoot>';
   $result .= '<tbody>';
@@ -647,7 +634,7 @@ function vh_auto_clean_table_render() {
     $result .= '<td class="column-uri"><code>' . $list[$i]['uri'] . '</code></td>';
     $result .= '<td class="column-timing">' . vh_get_auto_clean_timing_render($list[$i]['timing']) . '</td>';
     $result .= '<td class="column-time">' . vh_get_auto_clean_last_clean_render($list[$i]['last_clean']) . '</td>';
-    $result .= '<td class="column-status">' . vh_get_auto_clean_last_status_render($list[$i]['last_status']) . '</td>';
+    $result .= '<td class="column-status">' . $list[$i]['last_status'] . '</td>';
     $result .= '<td class="column-actions">' . vh_get_auto_clean_manage_links_render($list[$i]['uuid']) . '</td>';
     $result .= '</tr>';
   }
@@ -942,113 +929,4 @@ function vh_unregister_settings() {
   unregister_setting('varnish-helper-settings', 'varnish_helper_custom_tasks');
 }
 register_deactivation_hook( __FILE__, 'vh_unregister_settings');
-
-
-/**
- * Do clean.
- *
- * @since 1.0
- */
-function vh_do_clean($timing) {
-  $list = vh_get_auto_clean_task_list();
-  $count = count($list);
-  $done = false;
-
-  for($i = 0; $i < $count; ++$i) {
-    if ($list[$i]['timing'] == $timing) {
-
-      if ($list[$i]['method'] == 'purge') {
-        $result = vh_purge($list[$i]['uri']);
-
-        $list[$i]['last_clean'] = current_time('mysql');
-        if (is_wp_error($result)) {
-          $list[$i]['last_status'] = 'wp error';
-
-        } else {
-          $list[$i]['last_status'] = array(
-            'code' => $result['response']['code'],
-            'message' => $result['response']['message']
-          );
-        }
-
-        $done = true;
-
-      } else if ($list[$i]['method'] == 'ban') {
-        $result = vh_ban($list[$i]['uri']);
-
-        $list[$i]['last_clean'] = current_time('mysql');
-        if (is_wp_error($result)) {
-          $list[$i]['last_status'] = 'wp error';
-          
-        } else {
-          $list[$i]['last_status'] = array(
-            'code' => $result['response']['code'],
-            'message' => $result['response']['message']
-          );
-        }
-
-        $done = true;
-      }
-    }
-  }
-
-  if ($done) {
-    vh_update_auto_clean_task_list($list);
-  }
-}
-
-
-/**
- * Do clean when post status changed.
- *
- * @since 1.0
- */
-function vh_do_clean_when_post_status_changed($new_status, $old_status, $post) {
-  if ($new_status == 'publish' || $old_status == 'publish') {
-    vh_do_clean('at_post_change');
-  }
-}
-
-
-/**
- * Do clean when comment posted.
- *
- * @since 1.0
- */
-function vh_do_clean_when_comment_posted($comment_id) {
-  vh_do_clean('at_comment_change');
-}
-
-
-/**
- * Do clean when comment status changed.
- *
- * @since 1.0
- */
-function vh_do_clean_when_comment_status_changed($new_status, $old_status, $comment) {
-  if ($new_status == 'approved' || $old_status == 'approved') {
-    vh_do_clean('at_comment_change');
-  }
-}
-
-
-/**
- * Do clean when theme switched.
- *
- * @since 1.0
- */
-function vh_do_clean_when_theme_switched() {
-  vh_do_clean('at_theme_switch');
-}
-
-
-// Purge when post status changed.
-add_action('transition_post_status', 'vh_do_clean_when_post_status_changed', 99, 3);
-
-// Purge when there is a comment or the existing comment status changes.
-add_action('comment_post', 'vh_do_clean_when_comment_posted', 99);
-add_action('transition_comment_status', 'vh_do_clean_when_comment_status_changed', 99, 3);
-
-// Purge when switching theme.
-add_action('switch_theme', 'vh_do_clean_when_theme_switched', 99);
 ?>

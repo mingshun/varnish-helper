@@ -10,3 +10,33 @@
 p.desc {
   border-bottom: 1px solid #ddd;
 }
+
+#edge-node-table .column-index {
+  width: 5%;
+}
+
+#edge-node-table .column-name {
+  width: 30%;
+}
+
+#edge-node-table .column-actions {
+  width: 10%;
+}
+
+#auto-clean-table .column-index {
+  width: 5%;
+}
+
+#auto-clean-table .column-method,
+#auto-clean-table .column-actions {
+  width: 10%;
+}
+
+#auto-clean-table .column-timing,
+#auto-clean-table .column-time {
+  width: 15%;
+}
+
+#auto-clean-table .column-status {
+  width: 25%;
+}

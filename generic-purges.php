@@ -182,32 +182,59 @@ function vh_purge_all() {
 
 
 /**
- * Purge custom uri while post status changes.
- *
- * @since 2.0
- */
-function vh_purge_while_post_status_changes() {
-
-}
-
-
-/**
- * Purge custom uri while comment status changes.
- *
- * @since 2.0
- */
-function vh_purge_while_comment_status_changes() {
-
-}
-
-
-/**
- * Purge custom uri while theme switches.
+ * Generate purge report.
  *
  * @since 1.0
  */
-function vh_purge_while_theme_switches() {
+function vh_generate_purge_report($results) {
+  $report = '';
+  for ($i = 0; $i < count($results); ++$i) {
+    $report .= '<code>' . $results[$i]['host'] . '</code> -> ';
+    $result = $results[$i]['result'];
+    if (is_wp_error($result)) {
+      $report .= '执行失败，原因：' . $result->get_error_message();
 
+    } else {
+      if ($result['response']['code'] == 200) {
+        $report .= '执行成功';
+
+      } else {
+        $report .= '执行失败，原因：' . $result['response']['message'];
+      }
+    }
+
+    if ($i + 1 < count($results)) {
+      $report .= '<br />';
+    }
+  }
+
+  return $report;
+}
+
+
+/**
+ * Generic custom url purge.
+ *
+ * @since 2.0
+ */
+function vh_generic_custom_purge($timing) {
+  $list = vh_get_auto_clean_task_list();
+  for ($i = 0; $i < count($list); ++$i) {
+    if ($list[$i]['timing'] == $timing) {
+      if ($list[$i]['method'] == 'purge' || $list[$i]['method'] == 'ban') {
+        $method = strtoupper($list[$i]['method']);
+        $uri = $list[$i]['uri'];
+        $list[$i]['last_clean'] = time();
+        $results = vh_generic_purge($uri, $method);
+        $list[$i]['last_status'] = vh_generate_purge_report($results);
+
+      } else {
+        $list[$i]['last_clean'] = time();
+        $list[$i]['last_status'] = '无效清洗方法：' . strtoupper($list[$i]['method']);
+      }
+    }
+  }
+  vh_update_auto_clean_task_list($list);
 }
 
 
