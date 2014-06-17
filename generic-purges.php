@@ -22,7 +22,7 @@ function vh_generic_purge($uri, $method) {
   $results = array();
   for ($i = 0; $i < count($hosts); ++$i) {
     $host = $hosts[$i]['host'];
-    $url = vh_get_url($host . $uri);
+    $url = VH_SCHEME_HTTP . $host . $uri;
     $result = wp_remote_request($url, array(
       'method' => $method,
       'headers' => array(
@@ -249,16 +249,6 @@ function vh_get_domain() {
 
 
 /**
- * Get blog url with ssl recognition.
- *
- * @since 2.0
- */
-function vh_get_blog_url() {
-  return vh_get_url(vh_get_domain());
-}
-
-
-/**
  * Get location by the given url.
  *
  * @since 2.0
@@ -272,16 +262,6 @@ function vh_get_location_by_url($url) {
     $scheme = NULL;
   }
   return str_ireplace($scheme, '', $url);
-}
-
-
-/**
- * Get url by the given location with ssl recognition.
- *
- * @since 2.0
- */
-function vh_get_url($location) {
-  return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? VH_SCHEME_HTTPS : VH_SCHEME_HTTP) . $location;
 }
 
 
