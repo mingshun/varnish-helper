@@ -23,10 +23,12 @@ function vh_generic_purge($uri, $method) {
   for ($i = 0; $i < count($hosts); ++$i) {
     $host = $hosts[$i]['host'];
     $url = VH_SCHEME_HTTP . $host . $uri;
+    $user_agent = 'Varnish Helper/2.0 (' . $method . ' ' . $uri . ' @ ' . $host . ')';
     $result = wp_remote_request($url, array(
       'method' => $method,
+      'user-agent' => $user_agent,
       'headers' => array(
-        'host' => vh_get_domain()
+        'Host' => vh_get_domain()
       ),
     ));
     array_push($results, array(
@@ -254,14 +256,13 @@ function vh_get_domain() {
  * @since 2.0
  */
 function vh_get_location_by_url($url) {
-  if (stripos($url, VH_SCHEME_HTTP) == 0) {
-    $scheme = VH_SCHEME_HTTP;
-  } else if (stripos($url, VH_SCHEME_HTTPS) == 0) {
-    $scheme = VH_SCHEME_HTTPS;
-  } else {
-    $scheme = NULL;
+  if (!isset($_SERVER['HTTPS'])) {
+    $_SERVER['HTTPS'] = 'off';
   }
-  return str_ireplace($scheme, '', $url);
+  if ($_SERVER['HTTPS'] == 'on') {
+    return substr($url, 8);
+  }
+  return substr($url, 7);
 }
 
 

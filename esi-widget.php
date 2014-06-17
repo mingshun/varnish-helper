@@ -20,13 +20,15 @@ function esi_widget($args) {
     $_SERVER['HTTPS'] = 'off';
   }
   $esi_server_https_state = $_SERVER['HTTPS'];
-  echo $before_widget;
-  echo '<!--esi ';
   $_SERVER['HTTPS'] = 'off';
+
+  echo isset($before_widget) ? $before_widget : '';
+  echo '<!--esi ';
   echo '<esi:include src="'. plugin_dir_url(__FILE__) . 'esi-sidebar.php" />';
-  $_SERVER['HTTPS'] = $esi_server_https_state;
   echo ' -->';
-  echo $after_widget;
+  echo isset($after_widget) ? $after_widget : '';
+
+  $_SERVER['HTTPS'] = $esi_server_https_state;
 }
 
 

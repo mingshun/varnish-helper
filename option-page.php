@@ -798,7 +798,7 @@ function vh_show_manual_clean_results($action, $uri, $results) {
   for ($i = 0; $i < count($results); ++$i) {
     $item = $results[$i];
     $message = $prefix;
-    $message .= '@' . $item['host'] . '</code> -> ';
+    $message .= ' @ ' . $item['host'] . '</code> -> ';
     if (is_wp_error($item['result'])) {
       $message .= '执行失败，原因：' . $item['result']->get_error_message();
       add_settings_error('varnish-helper-settings', 'manual', $message, 'error');
