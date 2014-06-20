@@ -112,4 +112,17 @@ add_action('transition_comment_status', 'vh_purge_while_comment_status_changes',
 
 // Purge custom uri when switching theme.
 add_action('switch_theme', 'vh_purge_while_theme_switches', 99);
+
+
+/**
+ * Add links on plugin page.
+ *
+ * @since 2.0
+ */
+function vh_add_plugin_links($links) {
+  return array_merge(array(
+    '<a href="' . admin_url('options-general.php?page=varnish-helper') . '">设置</a>',
+  ), $links);
+}
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'vh_add_plugin_links');
 ?>
