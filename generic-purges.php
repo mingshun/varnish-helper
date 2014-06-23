@@ -47,6 +47,8 @@ function vh_generic_purge($uri, $method) {
  * @since 1.0
  */
 function vh_purge($uri) {
+  error_log(vh_get_location_by_url('http://google.com'));
+  error_log(vh_get_location_by_url('https://google.com'));
   return vh_generic_purge($uri, 'PURGE');
 }
 
@@ -256,13 +258,14 @@ function vh_get_domain() {
  * @since 2.0
  */
 function vh_get_location_by_url($url) {
-  if (!isset($_SERVER['HTTPS'])) {
-    $_SERVER['HTTPS'] = 'off';
+  if (stripos($url, VH_SCHEME_HTTP) === 0) {
+    return str_ireplace(VH_SCHEME_HTTP, '', $url);
   }
-  if ($_SERVER['HTTPS'] == 'on') {
-    return substr($url, 8);
+
+  if (stripos($url, VH_SCHEME_HTTPS) === 0) {
+    return str_ireplace(VH_SCHEME_HTTPS, '', $url);
   }
-  return substr($url, 7);
+  return $url;
 }
 
 
