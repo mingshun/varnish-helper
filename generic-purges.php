@@ -47,8 +47,6 @@ function vh_generic_purge($uri, $method) {
  * @since 1.0
  */
 function vh_purge($uri) {
-  error_log(vh_get_location_by_url('http://google.com'));
-  error_log(vh_get_location_by_url('https://google.com'));
   return vh_generic_purge($uri, 'PURGE');
 }
 
